@@ -1,4 +1,4 @@
-;;; bibtex-actions.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
+;;; citar.el --- Bibliographic commands based on completing-read -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Bruce D'Arcus
 ;;
@@ -7,7 +7,7 @@
 ;; Created: February 27, 2021
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
-;; Homepage: https://github.com/bdarcus/bibtex-actions
+;; Homepage: https://github.com/bdarcus/citar
 ;; Package-Requires: ((emacs "26.3") (bibtex-completion "1.0") (parsebib "3.0"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -53,6 +53,10 @@
 (declare-function org-cite-make-insert-processor "org-cite")
 (declare-function org-cite-basic--complete-style "org-cite")
 (declare-function embark-act "ext:embark")
+
+(declare-function reftex-access-scan-info "reftex")
+(declare-function reftex-get-bibfile-list "reftex")
+(declare-function TeX-current-macro "tex")
 
 ;;; Declare variables for byte compiler
 
@@ -165,6 +169,32 @@ and nil means no action."
   :group 'citar
   :type 'function)
 
+(defcustom citar-major-mode-functions
+  '(((latex-mode) .
+     ((local-bib-files . citar-latex--local-bib-files)
+      (keys-at-point . citar-latex--keys-at-point)))
+    ((org-mode) .
+     ((local-bib-files . org-cite-list-bibliography-files)
+      (keys-at-point . citar-get-key-org-cite))))
+  "The variable determining the major mode specifc functionality.
+It is alist with keys being a list of major modes. The value is an alist
+with values being functions to be used for these modes while the keys
+are symbols used to lookup them up. The keys are
+
+local-bib-files: the corresponding functions should return the list of
+local bibliography files.
+
+insert-keys: the corresponding function should insert the list of keys given
+to as the argument at point in the buffer.
+
+keys-at-point: the corresponding function should return the list of keys at
+point."
+  :group 'citar
+  :type '(alist :key-type (repeat string :tag "Major modes")
+                :value-type (set (cons (const local-bib-files) function)
+                                 (cons (const insert-keys) function)
+                                 (cons (const keys-at-pont function)))))
+
 ;;; History, including future history list.
 
 (defvar citar-history nil
@@ -272,15 +302,31 @@ offering the selection candidates."
     (let ((extension (file-name-extension file)))
       (when transform file
         ;; Transform for grouping and group title display.
-        (pcase extension
-          ((or "org" "md") "Notes")
-          (_ "Library Files")))))
+        (cond
+         ((string= extension (or "org" "md")) "Notes")
+          (t "Library Files")))))
+
+(defun citar-latex--local-bib-files ()
+  "Local bibliographic for latex retrieved using reftex."
+  (reftex-access-scan-info t)
+  (ignore-errors (reftex-get-bibfile-list)))
+
+(defun citar-latex--keys-at-point ()
+  "Return a list of keys at point in latex buffers."
+  (let ((macro (TeX-current-macro)))
+    (when (string-match-p "cite" macro)
+      (split-string (thing-at-point 'list t) "," t "[{} ]+"))))
+
+(defun citar--major-mode-function (key)
+  "Function for the major mode corresponding to KEY applied to ARGS."
+  (funcall (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
+                                citar-major-mode-functions)))))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
   ;; We cache these locally to the buffer.
   (seq-difference (citar-file--normalize-paths
-                   (bibtex-completion-find-local-bibliography))
+                   (citar--major-mode-function 'local-bib-files))
                   (citar-file--normalize-paths
                    citar-bibliography)))
 
