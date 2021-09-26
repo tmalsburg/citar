@@ -45,7 +45,6 @@
 (require 'parsebib)
 (require 's)
 ;; Not ideal, find a better FIX
-(require 'reftex)
 (require 'oc)
 
 (declare-function org-element-context "org-element")
@@ -197,7 +196,8 @@ point."
   :type '(alist :key-type (repeat string :tag "Major modes")
                 :value-type (set (cons (const local-bib-files) function)
                                  (cons (const insert-keys) function)
-                                 (cons (const keys-at-pont function)))))
+                                 (cons (const insert-citations) function)
+                                 (cons (const keys-at-pont) function))))
 
 ;;; History, including future history list.
 
