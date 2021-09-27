@@ -733,8 +733,10 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-show-entry
-  (citar--extract-keys keys-entries)))
+ (let ((bibtex-files (seq-concatenate 'list
+                                      citar-bibliography
+                                      (citar--local-files-to-cache))))
+  (mapc (lambda (key) (bibtex-find-entry key t nil t)) (citar--extract-keys keys-entries))))
 
 ;;;###autoload
 (defun citar-open-link (keys-entries)
