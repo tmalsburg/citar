@@ -177,8 +177,8 @@ and nil means no action."
       (keys-at-point . citar-latex--keys-at-point)))
     ((org-mode) .
      ((local-bib-files . org-cite-list-bibliography-files)
-      (insert-keys . bibtex-actions--insert-keys-org-cite)
-      (keys-at-point . bibtex-actions-get-key-org-cite))))
+      (insert-keys . citar--insert-keys-org-cite)
+      (keys-at-point . citar-get-key-org-cite))))
   "The variable determining the major mode specifc functionality.
 It is alist with keys being a list of major modes. The value is an alist
 with values being functions to be used for these modes while the keys
@@ -636,7 +636,7 @@ FORMAT-STRING."
       ('citation
        (org-cite-get-references elt t)))))
 
-(defun bibtex-actions--insert-keys-org-cite (keys)
+(defun citar--insert-keys-org-cite (keys)
   "Insert KEYS in org-cite format"
   (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
 
