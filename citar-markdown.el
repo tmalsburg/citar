@@ -46,9 +46,9 @@
 
 (add-to-list 'citar-major-mode-functions
              '((markdown-mode) .
-               ((local-bibs . citar-markdown--local-bib-files)
+               ((local-bibs-files . citar-markdown--local-bib-files)
                 (insert-keys . citar-markdown--insert-keys)
-                (insert-citations . citar-markdown--insert-citation)
+                (insert-citation . citar-markdown--insert-citation)
                 (keys-at-point . citar-markdown--keys-at-point))))
 
 (defun citar-markdown--local-bib-files ()

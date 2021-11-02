@@ -70,7 +70,7 @@ the point."
              '((latex-mode) .
                ((local-bib-files . citar-latex--local-bib-files)
                 (insert-keys . citar-latex--insert-keys)
-                (insert-citations . citar-latex--insert-citations)
+                (insert-citation . citar-latex--insert-citation)
                 (keys-at-point . citar-latex--keys-at-point))))
 
 (defun citar-latex--local-bib-files ()
@@ -89,7 +89,7 @@ the point."
 (defvar citar-latex-cite-command-history nil
   "Variable for history of cite commands.")
 
-(defun citar-latex--insert-citations (keys &optional command)
+(defun citar-latex--insert-citation (keys &optional command)
   "Insert a citation consisting of KEYS.
 
 If the command is inside a citation command keys are added to it. Otherwise

@@ -84,21 +84,18 @@
   "Face used to highlight content in `citar' candidates."
   :group 'citar)
 
-(defcustom citar-bibliography bibtex-completion-bibliography
+(defcustom citar-bibliography nil
   "A list of bibliography files."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat file))
 
-(defcustom citar-library-paths bibtex-completion-library-path
+(defcustom citar-library-paths nil
   "A list of files paths for related PDFs, etc."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat path))
 
-(defcustom citar-notes-paths bibtex-completion-notes-path
+(defcustom citar-notes-paths nil
   "A list of file paths for bibliographic notes."
-  ;; The bibtex-completion default is likely to be removed in the future.
   :group 'citar
   :type '(repeat path))
 
@@ -166,6 +163,21 @@ and nil means no action."
   :type '(choice (const :tag "Prompt" 'prompt)
                  (const :tag "Ignore" nil)))
 
+(defcustom citar-open-note-function
+  'citar-org-open-notes-default
+  "Function to open and existing or create a new note.
+
+A note function must take two arguments:
+
+KEY: a string to represent the citekey
+ENTRY: an alist with the structured data (title, author, etc.)
+
+If you use 'org-roam' and 'org-roam-bibtex', you can use
+'orb-bibtex-actions-edit-note' for this value."
+  :group 'citar
+  :type '(function))
+
+
 (defcustom citar-at-point-function 'citar-dwim
   "The function to run for 'citar-at-point'."
   :group 'citar
@@ -175,6 +187,9 @@ and nil means no action."
   '(((latex-mode) .
      ((local-bib-files . citar-latex--local-bib-files)
       (keys-at-point . citar-latex--keys-at-point)))
+    ((markdown-mode) .
+     ((local-bib-files . citar-markdown--local-bib-files)
+      (insert-keys . citar-markdown--insert-keys)))
     ((org-mode) .
      ((local-bib-files . org-cite-list-bibliography-files)
       (insert-keys . citar--insert-keys-org-cite)
@@ -722,8 +737,6 @@ With prefix, rebuild the cache before offering candidates."
                     'citar-file-open-notes-default-org))
     (message "You must set 'citar-notes-paths' to open notes with default notes function"))
   (dolist (key-entry keys-entries)
-    ;; REVIEW doing this means the function won't be compatible with, for
-    ;; example, 'orb-edit-note'.
     (funcall citar-file-open-note-function
              (car key-entry) (cdr key-entry))))
 
