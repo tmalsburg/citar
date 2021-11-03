@@ -195,9 +195,12 @@ If you use 'org-roam' and 'org-roam-bibtex', you can use
       (insert-keys . citar--insert-keys-org-cite)
       (keys-at-point . citar-get-key-org-cite))))
   "The variable determining the major mode specifc functionality.
-It is alist with keys being a list of major modes. The value is an alist
-with values being functions to be used for these modes while the keys
-are symbols used to lookup them up. The keys are
+
+It is alist with keys being a list of major modes.
+
+The value is an alist with values being functions to be used for
+these modes while the keys are symbols used to lookup them up.
+The keys are:
 
 local-bib-files: the corresponding functions should return the list of
 local bibliography files.
@@ -205,13 +208,16 @@ local bibliography files.
 insert-keys: the corresponding function should insert the list of keys given
 to as the argument at point in the buffer.
 
+insert-citation: the corresponding function should insert a
+complete citation from a list of keys at point.
+
 keys-at-point: the corresponding function should return the list of keys at
 point."
   :group 'citar
   :type '(alist :key-type (repeat string :tag "Major modes")
                 :value-type (set (cons (const local-bib-files) function)
                                  (cons (const insert-keys) function)
-                                 (cons (const insert-citations) function)
+                                 (cons (const insert-citation) function)
                                  (cons (const keys-at-pont) function))))
 
 ;;; History, including future history list.
@@ -336,10 +342,11 @@ offering the selection candidates."
     (when (string-match-p "cite" macro)
       (split-string (thing-at-point 'list t) "," t "[{} ]+"))))
 
-(defun citar--major-mode-function (key)
+(defun citar--major-mode-function (key &rest args)
   "Function for the major mode corresponding to KEY applied to ARGS."
-  (funcall (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
-                                citar-major-mode-functions)))))
+  (apply (alist-get key (cdr (seq-find (lambda (x) (memq major-mode (car x)))
+                                citar-major-mode-functions)))
+         args))
 
 (defun citar--local-files-to-cache ()
   "The local bibliographic files not included in the global bibliography."
@@ -652,7 +659,7 @@ FORMAT-STRING."
        (org-cite-get-references elt t)))))
 
 (defun citar--insert-keys-org-cite (keys)
-  "Insert KEYS in org-cite format"
+  "Insert KEYS in org-cite format."
   (string-join (seq-map (lambda (key) (concat "@" key)) keys) ":"))
 
 ;;; Embark
@@ -772,7 +779,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
-  (bibtex-completion-insert-citation
+  (citar--major-mode-function 'insert-citation
    (citar--extract-keys
     keys-entries)))
 
@@ -787,12 +794,12 @@ With prefix, rebuild the cache before offering candidates."
     keys-entries)))
 
 ;;;###autoload
-(defun citar-insert-key (keys-entries)
-  "Insert BibTeX KEYS-ENTRIES.
+(defun citar-insert-keys (keys-entries)
+  "Insert KEYS-ENTRIES citekeys.
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (bibtex-completion-insert-key
+ (citar--major-mode-function 'insert-keys
   (citar--extract-keys
    keys-entries)))
 

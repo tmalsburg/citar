@@ -41,6 +41,7 @@
 
 (defcustom citar-markdown-prompt-for-extra-arguments t
   "Whether to prompt for additional arguments when inserting a citation."
+  ;; REVIEW this maybe shouldn't be mode specific?
   :group 'citar-markdown
   :type 'boolean)
 
@@ -53,11 +54,11 @@
 
 (defun citar-markdown--local-bib-files ()
   "Return local bib files for markdown."
-  (message "Markdown does not support local bib files"))
+  (error "Markdown does not support local bib files"))
 
 (defun citar-markdown--keys-at-point ()
   "Return a list of keys at point in a markdown buffer."
-  (message "TODO"))
+  (error "TODO"))
 
 (defun citar-markdown--insert-keys (keys)
   "Insert comma sperated KEYS in a markdown buffer."
