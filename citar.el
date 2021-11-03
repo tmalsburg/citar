@@ -266,29 +266,6 @@ point."
   :group 'citar
   :type '(restricted-sexp :match-alternatives (keymapp)))
 
-;;; mode hooks
-
-(defvar citar-local-bib-files-functions nil)
-(defvar citar-insert-keys-functions nil)
-(defvar citar-insert-citation-functions nil)
-(defvar citar-keys-at-point-functions nil)
-
-(defun citar--local-bib-files ()
-  "Run hook for finding local bib files."
-  (run-hook-with-args-until-success 'citar-local-bib-files-functions))
-
-(defun citar--keys-at-point ()
-  "Run hook for keys-at-point functions."
-  (run-hook-with-args-until-success 'citar-keys-at-point-functions))
-
-(defun citar--insert-keys (keys)
-  "Run hook for inserting KEYS."
-  (run-hook-with-args-until-success 'citar-insert-keys-functions keys))
-
-(defun citar--insert-citation (keys)
-  "Run hook for inserting citations from KEYS."
-  (run-hook-with-args-until-success 'citar-insert-citation-functions keys))
-
 ;;; Completion functions
 
 (cl-defun citar-select-refs (&optional &key rebuild-cache)
@@ -681,9 +658,10 @@ FORMAT-STRING."
 ;;; Embark
 
 ;;;###autoload
-(defun citar-keys-at-point ()
+(defun citar-citation-key-at-point ()
   "Return citation keys at point as a list for `embark'."
-  (when-let ((keys (citar--keys-at-point)))
+  (when-let ((keys (or (citar-get-key-org-cite)
+                      (bibtex-completion-key-at-point))))
     (cons 'citation-key (citar--stringify-keys keys))))
 
 (defun citar--stringify-keys (keys)
@@ -794,7 +772,7 @@ With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
   ;; TODO
-  (citar--insert-citation
+  (bibtex-completion-insert-citation
    (citar--extract-keys
     keys-entries)))
 
@@ -814,8 +792,9 @@ With prefix, rebuild the cache before offering candidates."
 With prefix, rebuild the cache before offering candidates."
   (interactive (list (citar-select-refs
                       :rebuild-cache current-prefix-arg)))
- (citar--insert-keys
-  (citar--extract-keys keys-entries)))
+ (bibtex-completion-insert-key
+  (citar--extract-keys
+   keys-entries)))
 
 ;;;###autoload
 (defun citar-insert-bibtex (keys-entries)
@@ -866,7 +845,7 @@ With prefix, rebuild the cache before offering candidates."
 (defun citar-dwim ()
   "Run the default action on citation keys found at point."
   (interactive)
-  (if-let ((keys (cdr (citar--keys-at-point))))
+  (if-let ((keys (cdr (citar-citation-key-at-point))))
       ;; FIX how?
       (citar-run-default-action keys)))
 
